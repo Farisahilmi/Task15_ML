@@ -9,7 +9,7 @@ import sys
 # KONFIGURASI HALAMAN
 # ============================================================
 st.set_page_config(
-    page_title="Student Burnout Predictor",
+    page_title="Prediksi Burnout Mahasiswa | Random Forest",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -98,9 +98,10 @@ with st.spinner("🔄 Memuat model... (Proses pertama kali bisa memakan waktu 1-
 # ============================================================
 # HEADER
 # ============================================================
-st.title("🎓 Student Burnout Prediction System")
+st.title("🎓 Implementasi Algoritma Random Forest untuk Prediksi Tingkat Burnout Mahasiswa")
+st.caption("Berdasarkan Faktor Akademik dan Gaya Hidup")
 st.markdown("""
-Aplikasi ini menggunakan model *Machine Learning* (**Random Forest**) untuk memprediksi 
+Aplikasi ini menggunakan model *Machine Learning* (**Random Forest Classifier**) untuk memprediksi 
 tingkat burnout mahasiswa berdasarkan faktor akademik dan gaya hidup.
 Isi formulir di bawah dan klik **Prediksi** untuk melihat hasilnya.
 """)

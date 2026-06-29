@@ -1,6 +1,6 @@
-# Student Burnout Prediction
+# Implementasi Algoritma Random Forest untuk Prediksi Tingkat Burnout Mahasiswa Berdasarkan Faktor Akademik dan Gaya Hidup
 
-Proyek Machine Learning untuk memprediksi tingkat burnout mahasiswa (Low, Medium, High) berdasarkan faktor akademik, gaya hidup, dan psikologis menggunakan algoritma **Random Forest Classifier**.
+Proyek *Machine Learning* berbasis **Supervised Learning (Classification)** untuk memprediksi tingkat burnout mahasiswa (Low / Medium / High) menggunakan algoritma **Random Forest Classifier**.
 
 ## Deskripsi Project
 Burnout di kalangan mahasiswa adalah masalah serius yang memengaruhi kesehatan mental dan performa akademik. Proyek ini bertujuan untuk mengidentifikasi mahasiswa yang berisiko mengalami burnout berdasarkan data seperti jam belajar, kualitas tidur, tingkat stres, dan tekanan akademik. 
