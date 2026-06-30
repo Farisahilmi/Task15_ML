@@ -575,9 +575,14 @@ elif page == "🔍 Prediksi Burnout":
 
                 prediction   = model.predict(input_scaled)[0]
                 probabilities = model.predict_proba(input_scaled)[0]
-                class_labels  = model.classes_
+                
+                # Decode model classes back to string labels
+                if 'burnout_level' in encoders:
+                    class_labels = encoders['burnout_level'].inverse_transform(model.classes_)
+                else:
+                    class_labels = model.classes_
 
-                # Decode label jika perlu
+                # Decode label prediction jika perlu
                 if 'burnout_level' in encoders:
                     pred_label = encoders['burnout_level'].inverse_transform([prediction])[0]
                 else:
