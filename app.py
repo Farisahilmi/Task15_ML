@@ -236,7 +236,7 @@ FEATURE_LABELS = {
 # ============================================================
 @st.cache_resource(show_spinner=False)
 def load_or_train_model():
-    """Load model dari model.pkl, atau latih ulang jika tidak ada / tidak kompatibel."""
+    """Load model dari model.pkl. Harus dilatih terpisah via train_model.py."""
     if os.path.exists(MODEL_PATH):
         try:
             with open(MODEL_PATH, "rb") as f:
@@ -247,97 +247,9 @@ def load_or_train_model():
                 return data
         except Exception:
             pass
-
-    # ── Latih ulang jika model.pkl tidak ada / tidak kompatibel ──
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.model_selection import train_test_split, cross_val_score
-    from sklearn.preprocessing import LabelEncoder, StandardScaler
-    from sklearn.metrics import (
-        accuracy_score, precision_score, recall_score,
-        f1_score, confusion_matrix
-    )
-
-    if not os.path.exists(DATASET_PATH):
-        return None
-
-    df = pd.read_csv(DATASET_PATH)
-
-    # Buat label burnout_level
-    def map_score(s):
-        if s <= 2: return 'Low'
-        elif s == 3: return 'Medium'
-        else: return 'High'
-
-    df['burnout_level'] = df['burnout_score'].apply(map_score)
-    cols_to_drop = ['student_id', 'burnout_score', 'high_burnout']
-    df = df.drop([c for c in cols_to_drop if c in df.columns], axis=1)
-    df = df.dropna().drop_duplicates()
-
-    # Encode
-    label_encoders = {}
-    for col in df.select_dtypes(include=['object']).columns:
-        le = LabelEncoder()
-        df[col] = le.fit_transform(df[col])
-        label_encoders[col] = le
-
-    X = df.drop('burnout_level', axis=1)
-    y = df['burnout_level']
-    features = X.columns
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42, stratify=y
-    )
-    scaler = StandardScaler()
-    X_train_s = scaler.fit_transform(X_train)
-    X_test_s  = scaler.transform(X_test)
-
-    rf = RandomForestClassifier(
-        n_estimators=200, min_samples_split=5,
-        min_samples_leaf=2, random_state=42, n_jobs=-1
-    )
-    rf.fit(X_train_s, y_train)
-    y_pred = rf.predict(X_test_s)
-
-    acc  = accuracy_score(y_test, y_pred)
-    prec = precision_score(y_test, y_pred, average='weighted', zero_division=0)
-    rec  = recall_score(y_test, y_pred, average='weighted', zero_division=0)
-    f1   = f1_score(y_test, y_pred, average='weighted', zero_division=0)
-
-    # Gunakan integer labels dari LabelEncoder (bukan string)
-    le_target  = label_encoders.get('burnout_level')
-    if le_target is not None:
-        int_labels = list(range(len(le_target.classes_)))
-        str_labels = list(le_target.classes_)
-    else:
-        int_labels = sorted(y_test.unique())
-        str_labels = [str(l) for l in int_labels]
-    cm = confusion_matrix(y_test, y_pred, labels=int_labels)
-
-    cv_scores = cross_val_score(rf, X_train_s, y_train, cv=5, scoring='accuracy')
-    fi = dict(zip(features, rf.feature_importances_))
-
-    model_data = {
-        'model'   : rf,
-        'scaler'  : scaler,
-        'encoders': label_encoders,
-        'features': features,
-        'metrics' : {
-            'accuracy' : acc,
-            'precision': prec,
-            'recall'   : rec,
-            'f1'       : f1,
-            'cv_mean'  : cv_scores.mean(),
-            'cv_std'   : cv_scores.std(),
-        },
-        'confusion_matrix'   : cm,
-        'confusion_labels'   : str_labels,
-        'feature_importances': fi,
-        'class_labels'       : str_labels,
-    }
-    with open(MODEL_PATH, "wb") as f:
-        pickle.dump(model_data, f)
-
-    return model_data
+    
+    # Jika model tidak ada atau tidak valid, kembalikan None
+    return None
 
 @st.cache_data(show_spinner=False)
 def load_dataset():
