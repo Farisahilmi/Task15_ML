@@ -407,8 +407,11 @@ def predict_burnout(model_data: dict, raw_inputs: dict):
                 )
             df_input[col] = le.transform(df_input[col])
 
-    # Scale fitur
-    input_scaled = scaler.transform(df_input)
+    # Scale fitur — kembalikan sebagai DataFrame agar model.predict() mendapat nama kolom
+    input_scaled = pd.DataFrame(
+        scaler.transform(df_input),
+        columns=FEATURE_COLUMNS
+    )
 
     # Prediksi
     pred_encoded  = rf_model.predict(input_scaled)[0]
@@ -682,7 +685,7 @@ elif page == "🔍 Prediksi Burnout":
             st.markdown("<br>", unsafe_allow_html=True)
             submitted = st.form_submit_button(
                 "🔍 Prediksi Tingkat Burnout",
-                use_container_width=True,
+                use_container_width=True,  # noqa: deprecated after 2025-12-31
                 type="primary"
             )
 
@@ -1059,7 +1062,7 @@ elif page == "📊 Analisis Dataset":
         with tab2:
             from sklearn.preprocessing import LabelEncoder as LE
             df_enc = df_raw.copy()
-            for col in df_enc.select_dtypes(include='object').columns:
+            for col in df_enc.select_dtypes(include=['object', 'str']).columns:
                 le = LE()
                 df_enc[col] = le.fit_transform(df_enc[col].astype(str))
 
