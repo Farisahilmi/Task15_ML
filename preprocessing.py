@@ -2,71 +2,87 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
-DATASET_PATH = 'dataset/student_burnout.csv'
+DATASET_PATH = 'dataset/student_mental_health_burnout_100k_fixed.xlsx'
+
+# Kolom fitur yang digunakan saat training (urutan harus sama persis)
+FEATURE_COLUMNS = [
+    'age',
+    'gender',
+    'academic_year',
+    'study_hours_per_day',
+    'exam_pressure',
+    'academic_performance',
+    'stress_level',
+    'anxiety_score',
+    'depression_score',
+    'sleep_hours',
+    'physical_activity',
+    'social_support',
+    'screen_time',
+    'internet_usage',
+    'financial_stress',
+    'family_expectation',
+]
+
+# Kolom target
+TARGET_COLUMN = 'burnout_level'
+
+# Kolom yang di-encode menggunakan LabelEncoder
+CATEGORICAL_COLS = ['gender', 'social_support']
+
 
 def load_data(file_path=DATASET_PATH):
-    """Load dataset dari file CSV."""
-    df = pd.read_csv(file_path)
+    """Load dataset dari file Excel atau CSV."""
+    if file_path.endswith('.xlsx') or file_path.endswith('.xls'):
+        df = pd.read_excel(file_path)
+    else:
+        df = pd.read_csv(file_path)
     return df
 
-def create_burnout_label(df):
-    """
-    Buat kolom 'burnout_level' (Low/Medium/High) dari 'burnout_score' (1–5):
-      - Low    : score 1–2
-      - Medium : score 3
-      - High   : score 4–5
-    """
-    def map_score(score):
-        if score <= 2:
-            return 'Low'
-        elif score == 3:
-            return 'Medium'
-        else:
-            return 'High'
-    df = df.copy()
-    df['burnout_level'] = df['burnout_score'].apply(map_score)
-    return df
 
 def preprocess_data(df):
     """
     Lakukan tahapan preprocessing:
-    1. Drop kolom yang tidak diperlukan (student_id, burnout_score, high_burnout)
-    2. Buat label burnout_level dari burnout_score
-    3. Handle missing values
-    4. Drop duplikat
-    5. Encode kolom kategorik (gender)
+    1. Pilih hanya kolom fitur + target
+    2. Handle missing values (drop baris NaN)
+    3. Drop duplikat
+    4. Encode kolom kategorik (gender, social_support, burnout_level)
+    5. Kembalikan df_processed dan dict encoders
+
+    Returns:
+        df_processed (pd.DataFrame): DataFrame yang sudah diproses
+        label_encoders (dict): Dictionary berisi LabelEncoder untuk setiap kolom kategorik
     """
-    # 1. Buat label target sebelum drop kolom
-    df = create_burnout_label(df)
+    # Pilih kolom yang relevan
+    all_cols = FEATURE_COLUMNS + [TARGET_COLUMN]
+    available_cols = [c for c in all_cols if c in df.columns]
+    df = df[available_cols].copy()
 
-    # 2. Drop kolom tidak diperlukan
-    cols_to_drop = ['student_id', 'burnout_score', 'high_burnout']
-    for col in cols_to_drop:
-        if col in df.columns:
-            df = df.drop(col, axis=1)
-
-    # 3. Handle missing values
+    # Handle missing values
     df = df.dropna()
 
-    # 4. Drop duplikat
+    # Drop duplikat
     df = df.drop_duplicates()
 
-    # 5. Encode kolom kategorik
-    categorical_cols = df.select_dtypes(include=['object']).columns
+    # Encode kolom kategorik (termasuk target)
     label_encoders = {}
-    for col in categorical_cols:
-        le = LabelEncoder()
-        df[col] = le.fit_transform(df[col])
-        label_encoders[col] = le
+    encode_cols = CATEGORICAL_COLS + [TARGET_COLUMN]
+
+    for col in encode_cols:
+        if col in df.columns:
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col].astype(str))
+            label_encoders[col] = le
 
     return df, label_encoders
 
-def split_and_scale(df, target_col='burnout_level'):
-    """Split data ke train/test set dan lakukan scaling fitur."""
-    X = df.drop(target_col, axis=1)
+
+def split_and_scale(df, target_col=TARGET_COLUMN):
+    """Split data ke train/test set dan lakukan StandardScaler pada fitur."""
+    X = df[FEATURE_COLUMNS]
     y = df[target_col]
 
-    # Train-test split 80:20
+    # Train-test split 80:20 dengan stratify
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
@@ -74,17 +90,23 @@ def split_and_scale(df, target_col='burnout_level'):
     # Standardisasi fitur numerik
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    X_test_scaled  = scaler.transform(X_test)
 
-    X_train_df = pd.DataFrame(X_train_scaled, columns=X.columns)
-    X_test_df = pd.DataFrame(X_test_scaled, columns=X.columns)
+    X_train_df = pd.DataFrame(X_train_scaled, columns=FEATURE_COLUMNS)
+    X_test_df  = pd.DataFrame(X_test_scaled, columns=FEATURE_COLUMNS)
 
     return X_train_df, X_test_df, y_train, y_test, scaler
 
+
 if __name__ == "__main__":
     df = load_data()
+    print(f"Dataset shape: {df.shape}")
+    print(f"Columns: {df.columns.tolist()}")
+
     df_processed, encoders = preprocess_data(df)
     X_train, X_test, y_train, y_test, scaler = split_and_scale(df_processed)
+
     print("Preprocessing selesai.")
     print(f"X_train shape: {X_train.shape}, y_train shape: {y_train.shape}")
     print(f"Target distribution:\n{y_train.value_counts()}")
+    print(f"Encoders: {list(encoders.keys())}")

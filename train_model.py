@@ -8,7 +8,8 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import cross_val_score
 
-from preprocessing import load_data, preprocess_data, split_and_scale
+from preprocessing import load_data, preprocess_data, split_and_scale, FEATURE_COLUMNS
+
 
 def train_and_evaluate():
     print("=" * 60)
@@ -63,11 +64,10 @@ def train_and_evaluate():
     print(classification_report(y_test, y_pred, zero_division=0))
 
     print("--- Confusion Matrix ---")
-    # Label di y_test sudah di-encode jadi integer: gunakan kelas asli dari encoder
     le_target = encoders.get('burnout_level')
     if le_target is not None:
-        int_labels   = list(range(len(le_target.classes_)))
-        str_labels   = list(le_target.classes_)          # e.g. ['High', 'Low', 'Medium']
+        int_labels = list(range(len(le_target.classes_)))
+        str_labels = list(le_target.classes_)   # e.g. ['High', 'Low', 'Medium']
         cm = confusion_matrix(y_test, y_pred, labels=int_labels)
         print(pd.DataFrame(cm, index=str_labels, columns=[f'Pred {l}' for l in str_labels]))
     else:
@@ -93,11 +93,11 @@ def train_and_evaluate():
     # Simpan model
     print("\nMenyimpan model ke 'model.pkl'...")
     model_data = {
-        'model'   : rf_model,
-        'scaler'  : scaler,
-        'encoders': encoders,
-        'features': features,
-        'metrics' : {
+        'model'               : rf_model,
+        'scaler'              : scaler,
+        'encoders'            : encoders,
+        'features'            : features,
+        'metrics'             : {
             'accuracy' : accuracy,
             'precision': precision,
             'recall'   : recall,
@@ -105,10 +105,10 @@ def train_and_evaluate():
             'cv_mean'  : cv_scores.mean(),
             'cv_std'   : cv_scores.std(),
         },
-        'confusion_matrix': cm,
-        'confusion_labels': str_labels,       # label string sesuai urutan encoder
-        'feature_importances': fi.to_dict(),
-        'class_labels': str_labels,
+        'confusion_matrix'    : cm,
+        'confusion_labels'    : str_labels,
+        'feature_importances' : fi.to_dict(),
+        'class_labels'        : str_labels,
     }
     with open('model.pkl', 'wb') as f:
         pickle.dump(model_data, f)
@@ -117,6 +117,7 @@ def train_and_evaluate():
     print("  Model berhasil disimpan sebagai 'model.pkl'")
     print("  Training selesai!")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     train_and_evaluate()
